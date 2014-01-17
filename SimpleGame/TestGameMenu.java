@@ -1,7 +1,7 @@
 /*
 Programmers: Kris Larson
 
-Description: 
+Description: The openning interface for players.
 
 */
 
