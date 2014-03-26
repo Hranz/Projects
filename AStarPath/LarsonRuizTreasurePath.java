@@ -98,7 +98,8 @@ Make the application:  create the MenuBar, "help" dialogs,
    }//End Constructor
 
    private void makeBot(String name, Point a, int h) {
-      PlayerBot b = new PlayerBot(name, a, h);
+      PlayerBot b = new PlayerBot(name, a, h, null, animatePanel);
+      b.gainFrame(this);
       bot.add(b); 
       animatePanel.addBot(b);
    }//End makeBot
@@ -109,7 +110,7 @@ Make the application:  create the MenuBar, "help" dialogs,
       Point temp = null;
       double dist, oldDist = 2000.0;
       
-      Iterator <WayPoint> iterator = map.values().iterator();
+      Iterator<WayPoint> iterator = map.values().iterator();
       WayPoint aWayPoint;
       
       while (iterator.hasNext()) {
@@ -127,13 +128,13 @@ Make the application:  create the MenuBar, "help" dialogs,
       return map.get(temp);
    }//End nearestWayPoint
    
-   public void permDraw() {
+   public void drawConnectors() {
       ArrayList<Point> neigh;
       WayPoint aWayPoint;
       HashSet<Connector> hs = new HashSet<Connector>();
       Connector c, d;
       
-      Iterator <WayPoint> iterator = map.values().iterator();
+      Iterator<WayPoint> iterator = map.values().iterator();
       while (iterator.hasNext()) { //Draw WayPoints
          animatePanel.addPermanentDrawable(iterator.next());
       }//End while
@@ -159,23 +160,27 @@ Make the application:  create the MenuBar, "help" dialogs,
       }//End while
       
       animatePanel.repaint();
-   }//End permDraw
-
+   }//End drawConnectors() method
+   
    public void setSimModel() {
       setStatus("Initial state of simulation");
       
       //Read and store waypoints using FileReader class
       FileReader fr = new FileReader(map, "waypointNeighbor.txt");
+      statusReport("Create HashMap " + map.size() + " City " + /*size +*/ " Gold " +
+         /*size +*/ " Map " /*+ size*/);
+      
    	// set any initial visual Markers or Connectors
    	// get any required user mouse clicks for positional information.
    	// initialize any algorithm halting conditions (ie, number of steps/moves).
-      permDraw();
+      drawConnectors();
       
       //Create Bot collection
       if (bot == null) {
          System.out.println("make new bots");
          bot = new ArrayList<PlayerBot>(); 
-      } else {
+      } 
+      else {
          bot.clear();
          System.out.println("reset bots"); 
       }//End if
@@ -206,192 +211,228 @@ Make the application:  create the MenuBar, "help" dialogs,
    public synchronized void simulateAlgorithm() {
       setStatus("simulateAlgorithm()");
       PlayerBot aBot = bot.get(0);
-      //ArrayList<WayPoint> moves = new ArrayList<WayPoint>(8);
+      aBot.setDest(end);
       aBot.gainMap(map);
+      CheckWayPoint check = new CheckWayPoint(aBot, this);;
       
-      Point aPoint, temp = null, prevPoint = null;
+      Point aPoint = aBot.getPoint();
+      Point temp = null;
+      Point prevPoint = null;
+      Point dest = end;
       
-      int c, g, tx, ty;
-      //double dist, oldDist;
-      //int destH = map.get(dest).getHeight();
-      WayPoint aWayPoint;
-      boolean hasTMap = false;
+      boolean mapMove = false;
       
+      //int c, g;
+      WayPoint aWayPoint = map.get(aPoint);
+   
+      List<WayPoint> list = new ArrayList<WayPoint>(); //Make stack
       
       String status = "Start (" + (int)start.getX() + ", " + (int)start.getY() + "), Stop (" +
          (int)end.getX() + ", " + (int)end.getY() + "), Player " + aBot.getStrength() + " $ " +
          aBot.getWealth();
       
       statusReport(status);
-      List<WayPoint> list = new ArrayList<WayPoint>(); 
-
+      
       while (runnable()) {
-      //if the waypoint doesn't have any neighbors, the list will always be null (infinite loop)
-         if ((list == null || list.isEmpty()) && !hasTMap) {
-            //list = aBot.aStarMove(end, list);
-            list = aStarMove(end, list, aBot);
-            
-            if (list == null) statusReport("No Path");
-         } else {
-         
-         aPoint = aBot.getPoint();
-         aWayPoint = map.get(aPoint);
-         
-         if ((aWayPoint.getMapX() > 0 || aWayPoint.getMapY() > 0) && !(hasTMap)) {
-            //Accessing a Map WayPoint
-            status = "Map (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + 
-               ") Treasure (" + aWayPoint.getMapX() + ", " + aWayPoint.getMapY() 
-               + ") Player " + aBot.getStrength() + " $ " + aBot.getWealth();
-            statusReport(status);
-            
-            //Repath towards treasure
-            if (!hasTMap && !aWayPoint.getVisted()) {
+         if ((list == null || list.isEmpty()) || (aBot.getTMap() && !mapMove)) {
+            animatePanel.clearTemporaryDrawables();
+            //if (!list.isEmpty()) list.clear();
+            //if (aBot.getTMap()) {
                list.clear();
-               //list = aBot.aStarMove(new Point(aWayPoint.getMapX(), aWayPoint.getMapY()), list);
-               list = aStarMove(new Point(aWayPoint.getMapX(), aWayPoint.getMapY()), list, aBot);
-               if (list == null) statusReport("No Path");
-               else
-               hasTMap = true;
-            }
-         } else if (aWayPoint.getCityValue() > 0) {
-            //Accessing a City WayPoint
-            status = "City (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + ") $ " +
-               aWayPoint.getCityValue() + ", Player " + aBot.getStrength() + " $ " +
-               aBot.getWealth();
+               dest = aBot.getDest();
+            //}
+            
+            list = aBot.aStarMove(dest, list, app);
+            //list = aStarMove(end, list, aBot);
+            status = "Path (" + (int)aBot.getPoint().getX() + ", " + (int)aBot.getPoint().getY() + 
+               ") to (" + (int)dest.getX() + ", " + (int)dest.getY() + "), length " + list.size();
             statusReport(status);
-                  
-            c = aWayPoint.getCityValue();
-            if (aBot.getWealth() >= c) {
-               aBot.setWealth(aBot.getWealth() - c);
-               aBot.setStrength(aBot.getStrength() + c);
+            
+            //Path (<x>, <y>) to (<x>, <y>), length <n>
+            if (!mapMove) mapMove = true;
+            if (!aBot.getTMap() && mapMove) mapMove = false;
+            //if (!mapMove || (!aBot.hasTMap && mapMove)) mapMove = !mapMove; //test this if the other two work
+            //if the player has a map and has just made the path to it, make mapMove true
+            //so that a new path isn't created. Once the player has reached the gold WP from
+            //the TMap, hasTMap is set to false and a new path must be made back to the original
+            //destination. When the player doesn't have a TMap and the move has been made, mapMove
+            //is set back to false as a reset.
+            
+            if (list == null) {
+               setSimRunning(false);
+               setModelValid(false);
+               animatePanel.setComponentState(false, false, false, false, true);
+               status = "No path (" + (int)start.getX() + ", " + (int)aPoint.getY() + ") " + 
+                  "to (" + (int)dest.getX() + ", " + (int)dest.getY() + ")";
+               statusReport(status);
+               return;
             }//End if
-         } else if (aWayPoint.getGold() > 0) {
-            //Accessing a Gold WayPoint
-            status = "Gold (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + ") $ " +
-               aWayPoint.getGold() + ", Player " + aBot.getStrength() + " $ " +
-               aBot.getWealth();
-            statusReport(status);
+         } 
+         else {
+         
+            aPoint = aBot.getPoint();
+            aWayPoint = map.get(aPoint);
             
-            if (hasTMap) {
-               //list = aBot.aStarMove(end, list);
-               hasTMap = false;
-            }
-            
-            //If the "bot" travels to a gold WayPoint because of a Map and this point has
-            //already been visted, then no gold is taken.
-            if (!aWayPoint.getVisted()) {
-               g = aWayPoint.getGold();
-               aBot.setWealth(aBot.getWealth() + g);
+            check.checkWP(aWayPoint);
+         
+         // if ((aWayPoint.getMapX() > 0 || aWayPoint.getMapY() > 0) && !(hasTMap)) {
+         //             //Accessing a Map WayPoint
+         //             status = "Map (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + 
+         //                ") Treasure (" + aWayPoint.getMapX() + ", " + aWayPoint.getMapY() 
+         //                + ") Player " + aBot.getStrength() + " $ " + aBot.getWealth();
+         //             statusReport(status);
+         //             
+         //             //Repath towards treasure
+         //             if (!hasTMap && !aWayPoint.getVisted()) {
+         //                list.clear();
+         //                list = aBot.aStarMove(new Point(aWayPoint.getMapX(), aWayPoint.getMapY()), list, app);
+         //                //list = aStarMove(new Point(aWayPoint.getMapX(), aWayPoint.getMapY()), list, aBot);
+         //                if (list == null) statusReport("No Path");
+         //                else
+         //                hasTMap = true;
+         //             }
+         //          } else if (aWayPoint.getCityValue() > 0) {
+         //             //Accessing a City WayPoint
+         //             status = "City (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + ") $ " +
+         //                aWayPoint.getCityValue() + ", Player " + aBot.getStrength() + " $ " +
+         //                aBot.getWealth();
+         //             statusReport(status);
+         //                   
+         //             c = aWayPoint.getCityValue();
+         //             if (aBot.getWealth() >= c) {
+         //                aBot.setWealth(aBot.getWealth() - c);
+         //                aBot.setStrength(aBot.getStrength() + c);
+         //             }//End if
+         //          } else if (aWayPoint.getGold() > 0) {
+         //             //Accessing a Gold WayPoint
+         //             status = "Gold (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + ") $ " +
+         //                aWayPoint.getGold() + ", Player " + aBot.getStrength() + " $ " +
+         //                aBot.getWealth();
+         //             statusReport(status);
+         //             
+         //             if (hasTMap) {
+         //                //list = aBot.aStarMove(end, list);
+         //                hasTMap = false;
+         //             }
+         //             
+         //             //If the "bot" travels to a gold WayPoint because of a Map and this point has
+         //             //already been visted, then no gold is taken.
+         //             if (!aWayPoint.getVisted()) {
+         //                g = aWayPoint.getGold();
+         //                aBot.setWealth(aBot.getWealth() + g);
+         //             }//End if
+         //          } else {
+         //             //At a Normal WayPoint
+         //             status = "WayPoint (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() +
+         //                "), Player " + aBot.getStrength() + " $ " + aBot.getWealth();
+         //             statusReport(status);
+         //          }//End if
+         //             
+         //          aWayPoint.setVisted(); //Set WayPoint to visited
+         
+            if (aBot.getPoint().equals(end) && !aBot.getTMap()) {
+               setSimRunning(false);
+               setModelValid(false);
+               animatePanel.setComponentState(false, false, false, false, true);
+               status = "Success, goal (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + ") " + 
+                  ", Player " + aBot.getStrength() + " $ " + aBot.getWealth();
+               statusReport(status);
+               return;
             }//End if
-         } else {
-            //At a Normal WayPoint
-            status = "WayPoint (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() +
-               "), Player " + aBot.getStrength() + " $ " + aBot.getWealth();
-            statusReport(status);
-         }//End if
             
-         aWayPoint.setVisted(); //Set WayPoint to visited
-         
-         if (aBot.getPoint().equals(end) && !hasTMap) {
-            setSimRunning(false);
-            setModelValid(false);
-            animatePanel.setComponentState(false, false, false, false, true);
-            status = "Success, goal (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + ") " + 
-               ", Player " + aBot.getStrength() + " $ " + aBot.getWealth();
-            statusReport(status);
-            return;
-         }//End if
-         
-         aBot.setMove(list.get(0));
-         list.remove(0);
-         aBot.move();
+            if (!aBot.getTMap() || mapMove) {
+               aBot.setMove(list.get(0));
+               list.remove(0);
+               aBot.move();
+            }
          }
          
+         //animatePanel.repaint();
          checkStateToWait();
       }//End while
    }//End simulateAlgorithm
    
-   public List<WayPoint> aStarMove(Point dest, List<WayPoint> list, Bot aBot) {
-      //Make into a class?
-      animatePanel.clearTemporaryDrawables();
-      
-      PriorityQueue<Node> openSet = new PriorityQueue(20, new NodeComparator());
-      ArrayList<Node> closedSet = new ArrayList<Node>();
-      ArrayList<Point> tempNeigh;
-      Node in;
-      boolean goal = false;
-      
-      //First Node in openSet
-      Node node = new Node(aBot.getPoint(), 0, aBot.getPoint().distance(dest), null);
-      openSet.add(node);
-      WayPoint aWayPoint = map.get(aBot.getPoint());
-      
-      while (openSet.size() > 0) {
-         //add point neighbors to tempNeigh and add to list if they aren't in the openSet or closedSet
-         
-         if (node.getPoint().equals(dest)) {
-            goal = true;
-            closedSet.add(node);
-            openSet.clear();
-            
-            animatePanel.addTemporaryDrawable(new Marker(node.getPoint(), Color.BLACK, 2));
-            //animatePanel.repaint();
-            //break;
-         } else {
-            double dist;
-            tempNeigh = aWayPoint.getNeigh(); //ArrayList of points
-            if (tempNeigh.size() > 0) { 
-               for (int i = 0; i < aWayPoint.getNeighbors(); i++) {
-                  in = new Node(tempNeigh.get(i), node.getDist() +
-                     node.getPoint().distance(tempNeigh.get(i)), 
-                     tempNeigh.get(i).distance(dest), node);
-                  if (!(openSet.contains(in) || closedSet.contains(in)) && in != null) {
-                     openSet.add(in);
-                     //in.makeWhite();
-                     
-                     animatePanel.addTemporaryDrawable(new Marker(tempNeigh.get(i), Color.WHITE, 3));
-                     //animatePanel.repaint();
-                  }
-               }//End for
-               openSet.remove(node);
-               closedSet.add(node);
-               
-               animatePanel.addTemporaryDrawable(new Marker(node.getPoint(), Color.GRAY, 2));
-               //animatePanel.repaint();
-               
-               node = openSet.peek();
-               aWayPoint = map.get(node.getPoint());
-            } else {
-               openSet.clear();
-            }//End if
-         }//End if
-         animatePanel.repaint();
-      }//End while
-      
-      //Build path 
-      if (goal) {
-         Stack<Node> stack = new Stack<Node>();
-         
-         stack.push(node);
-         //aWayPoint = map.get(node.getPrev().getPoint());
-         
-         while (node != null) {
-            stack.push(node);
-            node = node.getPrev();
-            //aWayPoint = map.get(node.getPoint());
-         }//End while
-
-            
-         while(stack.size() > 0){
-             list.add(map.get(stack.pop().getPoint()));
-         }
-         list.remove(0);//Remove the initial node
-         return list;
-
-      
-      }//End if
-      
-      return null;
-   }//End aStarMove() method
+   // public List<WayPoint> aStarMove(Point dest, List<WayPoint> list, Bot aBot) {
+//       //Make into a class?
+//       animatePanel.clearTemporaryDrawables();
+//       
+//       PriorityQueue<Node> openSet = new PriorityQueue(20, new NodeComparator());
+//       ArrayList<Node> closedSet = new ArrayList<Node>();
+//       ArrayList<Point> tempNeigh;
+//       Node in;
+//       boolean goal = false;
+//       
+//       //First Node in openSet
+//       Node node = new Node(aBot.getPoint(), 0, aBot.getPoint().distance(dest), null);
+//       openSet.add(node);
+//       WayPoint aWayPoint = map.get(aBot.getPoint());
+//       
+//       while (openSet.size() > 0) {
+//          //add point neighbors to tempNeigh and add to list if they aren't in the openSet or closedSet
+//          
+//          if (node.getPoint().equals(dest)) {
+//             goal = true;
+//             closedSet.add(node);
+//             openSet.clear();
+//             
+//             animatePanel.addTemporaryDrawable(new Marker(node.getPoint(), Color.BLACK, 2));
+//             //animatePanel.repaint();
+//             //break;
+//          } else {
+//             double dist;
+//             tempNeigh = aWayPoint.getNeigh(); //ArrayList of points
+//             if (tempNeigh.size() > 0) { 
+//                for (int i = 0; i < aWayPoint.getNeighbors(); i++) {
+//                   in = new Node(tempNeigh.get(i), node.getDist() +
+//                      node.getPoint().distance(tempNeigh.get(i)), 
+//                      tempNeigh.get(i).distance(dest), node);
+//                   if (!(openSet.contains(in) || closedSet.contains(in)) && in != null) {
+//                      openSet.add(in);
+//                      //in.makeWhite();
+//                      
+//                      animatePanel.addTemporaryDrawable(new Marker(tempNeigh.get(i), Color.WHITE, 3));
+//                      //animatePanel.repaint();
+//                   }
+//                }//End for
+//                openSet.remove(node);
+//                closedSet.add(node);
+//                
+//                animatePanel.addTemporaryDrawable(new Marker(node.getPoint(), Color.GRAY, 2));
+//                //animatePanel.repaint();
+//                
+//                node = openSet.peek();
+//                aWayPoint = map.get(node.getPoint());
+//             } else {
+//                openSet.clear();
+//             }//End if
+//          }//End if
+//          animatePanel.repaint();
+//       }//End while
+//       
+//       //Build path 
+//       if (goal) {
+//          Stack<Node> stack = new Stack<Node>();
+//          
+//          stack.push(node);
+//          //aWayPoint = map.get(node.getPrev().getPoint());
+//          
+//          while (node != null) {
+//             stack.push(node);
+//             node = node.getPrev();
+//             //aWayPoint = map.get(node.getPoint());
+//          }//End while
+// 
+//             
+//          while(stack.size() > 0){
+//              list.add(map.get(stack.pop().getPoint()));
+//          }
+//          list.remove(0);//Remove the initial node
+//          return list;
+// 
+//       
+//       }//End if
+//       
+//       return null;
+//    }//End aStarMove() method
    
 }//End Class
