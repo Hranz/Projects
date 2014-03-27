@@ -93,11 +93,11 @@ public class PlayerBot extends Bot {
    
    public void setDest(Point dest) {
       this.dest = dest;
-   }
+   }//End setDest() method
    
    public void gainFrame(SimFrame s) {
       sf = s;
-   }
+   }//End gainFrame() method
    
    public void reset() {
       super.reset();
@@ -152,15 +152,6 @@ public class PlayerBot extends Bot {
    //       }//End if
    }//End simpleMove() method
    
-   private void waitT() {
-      try {
-         Thread.sleep(10);
-      } 
-      catch(InterruptedException ex) {
-         Thread.currentThread().interrupt();
-      }
-   }//End wait() method
-   
    private boolean setContains(PriorityQueue<Node> openSet, HashSet<Node> closedSet, Node in) {
       Iterator<Node> iterator = openSet.iterator();
       while (iterator.hasNext()) {
@@ -180,7 +171,7 @@ public class PlayerBot extends Bot {
    }//End setContains() method
    
    //Handles A* algorithm
-   public List<WayPoint> aStarMove(Point dest, List<WayPoint> list, LarsonRuizTreasurePath app) {
+   public Stack<WayPoint> aStarMove(Point dest, LarsonRuizTreasurePath app) {
       //Make into a class?
       PriorityQueue<Node> openSet = new PriorityQueue(20, new NodeComparator());
       HashSet<Node> closedSet = new HashSet<Node>();
@@ -198,11 +189,9 @@ public class PlayerBot extends Bot {
          
          if (node.getPoint().equals(dest)) {
             goal = true;
-            closedSet.add(node);
             animatePanel.addTemporaryDrawable(new Marker(node.getPoint(), Color.BLACK, 2));
             animatePanel.repaint();
             openSet.clear();
-            //break;
          } 
          else {
             double dist;
@@ -213,26 +202,24 @@ public class PlayerBot extends Bot {
                      node.getPoint().distance(tempNeigh.get(i)), 
                      tempNeigh.get(i).distance(dest), node);
                   
-                  contains = setContains(openSet, closedSet, in);
+                  //contains = setContains(openSet, closedSet, in);
                   
                   //Can't use contains method for PriorityQueue and HashSet. Why?
-                  if (!contains) {
+                  //if (!contains) {
+                  if (!openSet.contains(in) && !closedSet.contains(in)) {
                      openSet.add(in);
                      animatePanel.addTemporaryDrawable(new Marker(tempNeigh.get(i), Color.WHITE, 3));
                      //animatePanel.repaint();
-                     //waitT();
                      sf.checkStateToWait();
                   }
                }//End for
+            } else { 
+               return null; 
             }//End if
-            else { 
-               return null; }
             
             openSet.remove(node);
             closedSet.add(node);
             animatePanel.addTemporaryDrawable(new Marker(node.getPoint(), Color.BLACK, 2));
-            //animatePanel.repaint();
-            //waitT();
             sf.checkStateToWait();
                
             node = openSet.peek();
@@ -246,25 +233,14 @@ public class PlayerBot extends Bot {
       
       //Build path 
       if (goal) {
-         Stack<Node> stack = new Stack<Node>();
-         
-         stack.push(node);
-         //aWayPoint = map.get(node.getPrev().getPoint());
+         Stack<WayPoint> list = new Stack<WayPoint>();
+         list.push(map.get(node.getPoint()));
          
          while (node != null) {
-            stack.push(node);
+            list.push(map.get(node.getPoint()));
             node = node.getPrev();
-            //aWayPoint = map.get(node.getPoint());
          }//End while
-      
-            
-         while(stack.size() > 0){
-            list.add(map.get(stack.pop().getPoint()));
-         }
-         list.remove(0);//Remove the initial node
          return list;
-      
-      
       }//End if
       
       return null;

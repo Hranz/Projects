@@ -28,7 +28,7 @@ public class CheckWayPoint {
       else if (aWayPoint.getGold() > 0) {
          goldWP(aWayPoint);
       } 
-      else if ((aWayPoint.getMapX() > 0 || aWayPoint.getMapY() > 0)) {
+      else if ((aWayPoint.getMapX() > 0 || aWayPoint.getMapY() > 0) && !aBot.getTMap()) {
          mapWP(aWayPoint);
       } 
       else {

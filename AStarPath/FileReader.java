@@ -8,9 +8,11 @@ import java.io.IOException;
 public class FileReader {
 
    HashMap<Point, WayPoint> map;
+   private int[] num = new int[3];
+   private int c = 0, g = 0, m = 0;
    
-   public FileReader(HashMap<Point, WayPoint> m, String fileName) {
-      map = m;
+   public FileReader(HashMap<Point, WayPoint> map, String fileName) {
+      this.map = map;
       //Read from file
       File sourceFile = new File(fileName);
       
@@ -51,16 +53,33 @@ public class FileReader {
       }//End loop
    
       if (cityValue > 0) { //City WayPoint
+         c++;
          map.put(keyPoint, 
             (new WayPoint(keyPoint, height, cityValue, neighbor, neigh)));
-      } else if (gold > 0) //Gold WayPoint
+      } else if (gold > 0) { //Gold WayPoint
+         g++;
          map.put(keyPoint, 
             (new WayPoint(x, y, height, gold, neighbor, neigh)));
-      else if (mapX > 0 || mapY > 0) //Map WayPoint
+      } else if (mapX > 0 || mapY > 0) { //Map WayPoint
+         m++;
          map.put(keyPoint, 
             (new WayPoint(x, y, height, mapX, mapY, neighbor, neigh)));
-      else //Normal WayPoint
+      } else {//Normal WayPoint
          map.put(keyPoint, 
             (new WayPoint(x, y, height, neighbor, neigh)));
+      } //End if
    }//End readFile() method
+   
+   public int getNumCities() {
+      return c;
+   }//End getNumCities() method
+   
+   public int getNumGold() {
+      return g;
+   }//End getNumGold() method
+   
+   public int getNumMaps() {
+      return m;
+   }//End getNumMaps() method
+   
 }//End FileReader class

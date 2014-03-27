@@ -10,21 +10,13 @@ import SimulationFramework.*;
 import java.awt.Point;
 import java.awt.Color;
 
-public class Node {
+public class Node implements Comparable<Node> {
    
    private double g, totalDist;
    private Node prev;
    private Point p;
-   private AnimatePanel animatePanel;
-   
-   public Node() {
-      //blank Node to initialize animatePanel for drawing
-   }
    
    public Node(Point p, double g, double h, Node prev) {
-      //p is current the current Node being evaluated
-      //c is white and size 3 for open set, black and size 2 for closed set
-      //super(p, Color.WHITE, 3);
       this.p = p;
       this.g = g;
       totalDist = g + h;
@@ -49,13 +41,25 @@ public class Node {
       return prev;
    }//End getPrev() method
    
-   public void makeWhite() {
-      addDraw(new Marker(p, Color.WHITE, 3));  
-   }
+   public int compareTo(Node n1) {
+      if (this.p.equals(n1.p)) {
+         return 0;
+      } else {
+         return -1;
+      }//End if
+
+   }//End compareTo() method
+      
+   public boolean equals(Object obj) {
+		if (!(obj instanceof Node))
+			return false;	
+		if (obj == this)
+			return true;
+		return this.p.equals(((Node) obj).p);
+	}
    
-   private void addDraw(Drawable d) {
-      if (animatePanel != null)
-      animatePanel.addTemporaryDrawable(d);
-   }//End addDraw
+   public int hashCode() {
+      return this.p.hashCode();
+   }
    
 }//End class

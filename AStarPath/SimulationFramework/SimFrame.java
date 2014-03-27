@@ -107,7 +107,7 @@ Display message in the status field and print in "console" window.
 @param text to display and print
 */
       
-   protected void statusReport(String message) {
+   public void statusReport(String message) {
       setStatus(message);
       System.out.println(message);
       }
@@ -277,7 +277,7 @@ Determine how many times thread needs to wait based on state of
 simulation model.
 */
 
-   protected void checkStateToWait() {
+   public void checkStateToWait() {
       delay();  // will cause a repaint().
       if (!simValid) 
             return;

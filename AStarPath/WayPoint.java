@@ -14,7 +14,7 @@ import SimulationFramework.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class WayPoint extends Marker {
+public class WayPoint extends Marker implements Comparable<WayPoint>{
    
    private int x, y, height, cityValue, gold, mapX, mapY, neighbors;
    private ArrayList<Point> neigh;
@@ -29,10 +29,10 @@ public class WayPoint extends Marker {
       this.cityValue = cityValue;
       this.neighbors = neighbors;
       this.neigh = neigh;
-      visted = false;
+      //visted = false;
    }//End Constructor for City WayPoints
    
-   //Not used now, but the "bot" can get coordinates to find a gold WayPoint.
+   //The "bot" can get coordinates to find a gold WayPoint.
    public WayPoint(int x, int y, int height, int mapX, int mapY, int neighbors, ArrayList<Point> neigh) {
       super(x, y, Color.MAGENTA, 5);
       this.x = x;
@@ -42,7 +42,7 @@ public class WayPoint extends Marker {
       this.mapY = mapY;
       this.neighbors = neighbors;
       this.neigh = neigh;
-      visted = false;
+      //visted = false;
    }//End Constructor for Map WayPoints
    
    //The "bot" can get gold here.
@@ -54,7 +54,7 @@ public class WayPoint extends Marker {
       this.gold = gold;
       this.neighbors = neighbors;
       this.neigh = neigh;
-      visted = false;
+      //visted = false;
    }//End Constructor for Gold WayPoints
    
    //A WayPoint that the "bot" can travel to.
@@ -65,8 +65,17 @@ public class WayPoint extends Marker {
       this.height = height;
       this.neighbors = neighbors;
       this.neigh = neigh;
-      visted = false;
+      //visted = false;
    }//End Constructor for Normal WayPoints 
+   
+   public void makeNormal() { //Change the draw of the waypoint on the map
+      //make into normalWayPoint
+      setColor(Color.BLACK);
+      setSize(2);
+      this.gold = 0;
+      this.mapX = 0;
+      this.mapY = 0;
+   }
    
    //WX to differentiate from Point class's getX()
    public int getWX() {
@@ -121,5 +130,21 @@ public class WayPoint extends Marker {
    public void setVisted() {
       visted = true;
    }//End setVisted
+   
+   public int compareTo(WayPoint wp) {
+      return -1;
+   }
+   
+   public boolean equals(Object obj) {
+		if (!(obj instanceof WayPoint))
+			return false;	
+		if (obj == this)
+			return true;
+		return this.getPoint().equals(((WayPoint) obj).getPoint());
+	}
+   
+   public int hashCode() {
+      return this.getPoint().hashCode();
+   }
 
 }//End Class
