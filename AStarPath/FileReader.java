@@ -1,3 +1,13 @@
+/*
+   Programmers: Kristoffer Larson, Josue Ruiz
+   Date: March 28, 2014
+   
+   Description: Reads in the values from the given file, constructs
+      WayPoint objects of the appropriate type, and then stores them
+      in the HashMap.
+
+*/
+
 import java.util.Scanner;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -7,8 +17,7 @@ import java.io.IOException;
 
 public class FileReader {
 
-   HashMap<Point, WayPoint> map;
-   private int[] num = new int[3];
+   public HashMap<Point, WayPoint> map;
    private int c = 0, g = 0, m = 0;
    
    public FileReader(HashMap<Point, WayPoint> map, String fileName) {

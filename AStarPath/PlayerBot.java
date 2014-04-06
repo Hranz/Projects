@@ -1,12 +1,14 @@
 /*
    Programmers: Kristoffer Larson, Josue Ruiz
-   Date: , 2014
+   Date: March 28, 2014
    
    Description: 
       PlayerBot is a child of Bot. It travels between WayPoints
       and loses strength as it moves. It will gain strength at
       City WayPoints by paying gold, and gold at Gold WayPoints.
-      Map WayPoints aren't handled in this project.
+      If it finds a map at a Map WayPoint, it go to the coordinates
+      given and then repaths back to it's original destination. A
+      PlayerBot has it's own methods for pathing (A* or simpleMove).
 */
 
 import SimulationFramework.Bot;
@@ -152,24 +154,6 @@ public class PlayerBot extends Bot {
    //       }//End if
    }//End simpleMove() method
    
-   private boolean setContains(PriorityQueue<Node> openSet, HashSet<Node> closedSet, Node in) {
-      Iterator<Node> iterator = openSet.iterator();
-      while (iterator.hasNext()) {
-         if (iterator.next().getPoint().equals(in.getPoint())) {
-            return true;
-         }
-      }
-      
-      iterator = closedSet.iterator();
-      while (iterator.hasNext()) {
-         if (iterator.next().getPoint().equals(in.getPoint())) {
-            return true;
-         }
-      }
-      return false;
-      
-   }//End setContains() method
-   
    //Handles A* algorithm
    public Stack<WayPoint> aStarMove(Point dest, LarsonRuizTreasurePath app) {
       //Make into a class?
@@ -202,14 +186,9 @@ public class PlayerBot extends Bot {
                      node.getPoint().distance(tempNeigh.get(i)), 
                      tempNeigh.get(i).distance(dest), node);
                   
-                  //contains = setContains(openSet, closedSet, in);
-                  
-                  //Can't use contains method for PriorityQueue and HashSet. Why?
-                  //if (!contains) {
                   if (!openSet.contains(in) && !closedSet.contains(in)) {
                      openSet.add(in);
                      animatePanel.addTemporaryDrawable(new Marker(tempNeigh.get(i), Color.WHITE, 3));
-                     //animatePanel.repaint();
                      sf.checkStateToWait();
                   }
                }//End for
@@ -240,6 +219,7 @@ public class PlayerBot extends Bot {
             list.push(map.get(node.getPoint()));
             node = node.getPrev();
          }//End while
+         list.pop();
          return list;
       }//End if
       

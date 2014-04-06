@@ -1,6 +1,6 @@
 /*
    Programmers: Kristoffer Larson, Josue Ruiz
-   Date: , 2014
+   Date: March 28, 2014
    
    Description: 
       Creates WayPoint objects that the "bot" can traverse,
@@ -14,11 +14,10 @@ import SimulationFramework.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class WayPoint extends Marker implements Comparable<WayPoint>{
+public class WayPoint extends Marker{
    
    private int x, y, height, cityValue, gold, mapX, mapY, neighbors;
    private ArrayList<Point> neigh;
-   private boolean visted;
    
    //The "bot" can pay gold to gain strength here.
    public WayPoint(Point spot, int height, int cityValue, int neighbors, ArrayList<Point> neigh) {
@@ -122,29 +121,5 @@ public class WayPoint extends Marker implements Comparable<WayPoint>{
    public ArrayList<Point> getNeigh() {
       return neigh;
    }//End getNeighbors
-   
-   public boolean getVisted() {
-      return visted;
-   }//End getVisted
-   
-   public void setVisted() {
-      visted = true;
-   }//End setVisted
-   
-   public int compareTo(WayPoint wp) {
-      return -1;
-   }
-   
-   public boolean equals(Object obj) {
-		if (!(obj instanceof WayPoint))
-			return false;	
-		if (obj == this)
-			return true;
-		return this.getPoint().equals(((WayPoint) obj).getPoint());
-	}
-   
-   public int hashCode() {
-      return this.getPoint().hashCode();
-   }
 
 }//End Class

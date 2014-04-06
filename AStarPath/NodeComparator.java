@@ -1,8 +1,9 @@
 /*
    Programmers: Kristoffer Larson, Josue Ruiz
-   Date:
+   Date: March 28, 2014
    
-   Description
+   Description: A comparator class for the PriorityQueue in
+      the A* algorithm, inside the PlayerBot class.
 
 */
 

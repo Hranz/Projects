@@ -1,6 +1,6 @@
 /*
    Programmer: Kristoffer Larson
-   Date: March , 2014
+   Date: March 28, 2014
    
    Description: Checks the WayPoint for the PlayerBot
 */
@@ -10,10 +10,9 @@ import java.awt.Point;
 
 public class CheckWayPoint {
 
-   PlayerBot aBot;
-   Point end;
-   SimFrame s;
-   String status;
+   private PlayerBot aBot;
+   private Point end;
+   private SimFrame s;
 
    public CheckWayPoint(PlayerBot aBot, SimFrame s) {
       this.aBot = aBot;
@@ -21,6 +20,7 @@ public class CheckWayPoint {
       end = aBot.getDest();
    }//End SpotCheck() Constructor
    
+   //Check the type of WayPoint
    public void checkWP(WayPoint aWayPoint) {
       if (aWayPoint.getCityValue() > 0) {
          cityWP(aWayPoint);
@@ -34,41 +34,36 @@ public class CheckWayPoint {
       else {
          normalWP(aWayPoint);
       }
-   }
+   }//End checkWP() 
    
+   //Player accesses a city
    private void cityWP(WayPoint aWayPoint) {
-      status = "City (" + (int)aWayPoint.getWX() + ", " + (int)aWayPoint.getWY() + ") $ " +
+      s.statusReport("City (" + (int)aWayPoint.getWX() + ", " + (int)aWayPoint.getWY() + ") $ " +
          aWayPoint.getCityValue() + ", Player " + aBot.getStrength() + " $ " +
-         aBot.getWealth();
-      s.statusReport(status);
+         aBot.getWealth());
       
       int c = aWayPoint.getCityValue();
       if (aBot.getWealth() > c) {
          aBot.setWealth(aBot.getWealth() - c);
          aBot.setStrength(aBot.getStrength() + c);
       }
-   }
+   }//End cityWP()
    
+   //Player accesses gold
    private void goldWP(WayPoint aWayPoint) {
-      status = "Gold (" + (int)aWayPoint.getWX() + ", " + (int)aWayPoint.getWY() + ") $ " +
+      s.statusReport("Gold (" + (int)aWayPoint.getWX() + ", " + (int)aWayPoint.getWY() + ") $ " +
          aWayPoint.getGold() + ", Player " + aBot.getStrength() + " $ " +
-         aBot.getWealth();
-      s.statusReport(status);
-      
-      if (aBot.getTMap()) {
-         aBot.setTMap(false);
-         aBot.setDest(end);
-      }
+         aBot.getWealth());
 
       aBot.setWealth(aBot.getWealth() + aWayPoint.getGold());
       aWayPoint.makeNormal();
-   }
+   }//End goldWP()
    
+   //Player accesses a map
    private void mapWP(WayPoint aWayPoint) {
-      status = "Map (" + (int)aWayPoint.getWX() + ", " + (int)aWayPoint.getWY() + 
+      s.statusReport("Map (" + (int)aWayPoint.getWX() + ", " + (int)aWayPoint.getWY() + 
          ") Treasure (" + aWayPoint.getMapX() + ", " + aWayPoint.getMapY() 
-         + ") Player " + aBot.getStrength() + " $ " + aBot.getWealth();
-      s.statusReport(status);
+         + ") Player " + aBot.getStrength() + " $ " + aBot.getWealth());
       
       if (!aBot.getTMap()) {
          aBot.setDest(new Point(aWayPoint.getMapX(), aWayPoint.getMapY()));
@@ -76,12 +71,17 @@ public class CheckWayPoint {
       }
       
       aWayPoint.makeNormal();
-   }
+   }//End mapWP()
    
+   //Player accesses a normal point
    private void normalWP(WayPoint aWayPoint) {
-      status = "WayPoint (" + (int)aWayPoint.getWX() + ", " + (int)aWayPoint.getWX() +
-         "), Player " + aBot.getStrength() + " $ " + aBot.getWealth();
-      s.statusReport(status);
-   }
+      s.statusReport("WayPoint (" + (int)aWayPoint.getWX() + ", " + (int)aWayPoint.getWY() +
+         "), Player " + aBot.getStrength() + " $ " + aBot.getWealth());
+         
+      if (aBot.getTMap()) {
+         aBot.setTMap(false);
+         aBot.setDest(end);
+      }
+   }//End normalWP()
 
-}
+}//End CheckWayPoint class

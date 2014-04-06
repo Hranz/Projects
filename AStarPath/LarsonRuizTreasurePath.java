@@ -1,21 +1,19 @@
 /*
    Programmers: Kristoffer Larson, Josue Ruiz
-   Date: , 2014
+   Date: March 28, 2014
    
    Description: 
-      Extends SimFrame, this reads values from a file to create
-      WayPoint objects for a "bot" to traverse. At the start of
-      the simulation, it prompts for a start point and destination
-      point for the "bot" to move. Creates a "bot" at the start 
-      location, and runs simulateAlgorithm() which takes care of
-      the movement and halting conditions for the simulation.
+      Extends SimFrame, this is the driver class. This class initiates and
+      calls appropriate classes for tasks to be done. In no particular order
+      the following are called by this class: FileReader, PlayerBot, and 
+      CheckWayPoint.
+      
 */
 
 import java.awt.*;
 import java.awt.event.*;  
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.HashMap;
@@ -36,7 +34,7 @@ public class LarsonRuizTreasurePath extends SimFrame   {
       
    private Point start, end;
    
-   HashMap<Point, WayPoint> map = new HashMap<Point, WayPoint>();
+   public HashMap<Point, WayPoint> map = new HashMap<Point, WayPoint>();
 
    public static void main(String args[]) {
       LarsonRuizTreasurePath app = new LarsonRuizTreasurePath("LarsonRuizTreasurePath", "terrain282.png");
@@ -104,8 +102,8 @@ Make the application:  create the MenuBar, "help" dialogs,
       animatePanel.addBot(b);
    }//End makeBot
    
+   /**Finds the nearest WayPoint to the mouse click*/
    private WayPoint nearestWayPoint(int x, int y) {
-      //Finds the nearest WayPoint to the mouse click
       int tx, ty;
       Point temp = null;
       double dist, oldDist = 2000.0;
@@ -128,13 +126,12 @@ Make the application:  create the MenuBar, "help" dialogs,
       return map.get(temp);
    }//End nearestWayPoint
    
-   public void drawMap() {
-      //HashSet<WayPoint> hs = new HashSet<WayPoint>();
+   /**Draws WayPoints and Connectors onto the panel*/
+   private void drawMap() {
       ArrayList<Point> neigh;
       WayPoint aWayPoint;
       Point a = new Point(0,0);
       Point b = new Point(0,20);
-      Connector c;
       
       Iterator<WayPoint> iterator = map.values().iterator();
       while (iterator.hasNext()) { //Draw WayPoints
@@ -142,32 +139,26 @@ Make the application:  create the MenuBar, "help" dialogs,
       }//End while
       
       iterator = map.values().iterator(); //re-initialize iterator
-      //addPermanentDrawable for connectors
+      //Each point contains a list of it's neighbors. Without a check
+      //both connectors are drawn wasting time and memory.
       while (iterator.hasNext()) {
          aWayPoint = iterator.next();
          neigh = aWayPoint.getNeigh();
          for (int i = 0; i < aWayPoint.getNeighbors(); i++) {
-            //Puts in a HashSet so there are no duplicate connectors
-            
-            //c = new Connector(aWayPoint.getPoint(), neigh.get(i), Color.BLACK);
-            //animatePanel.addPermanentDrawable(c);
-         
-            //If I'm making both connectors, I might as well just draw both.
-            //Is there a better way to do this?
-            //if (!hs.contains(neigh.get(i))) {
+            //If aWayPoint is further from Point a than the neighbor is, draw the connector.
+            //If not, change the reference to Point b.
             if (aWayPoint.getPoint().distance(a) > neigh.get(i).distance(a)) {
-               c = new Connector(aWayPoint.getPoint(), neigh.get(i), Color.BLACK);
-               animatePanel.addPermanentDrawable(c);
-               animatePanel.repaint(); //Test connectors being drawn
-              // hs.add(aWayPoint);
+               //Create a connector between two WayPoints
+               animatePanel.addPermanentDrawable(new Connector(aWayPoint.getPoint(), neigh.get(i), 
+                  Color.BLACK));
+            //If aWayPoint is closer from Point b than the neighbor is, don't draw the connector.
+            //The opposite case has either already been drawn or will be drawn.
             } else if (aWayPoint.getPoint().distance(b) > neigh.get(i).distance(b)) {
-               c = new Connector(aWayPoint.getPoint(), neigh.get(i), Color.BLACK);
-               animatePanel.addPermanentDrawable(c);
-               animatePanel.repaint(); //Test connectors being drawn
+               animatePanel.addPermanentDrawable(new Connector(aWayPoint.getPoint(), neigh.get(i), 
+                  Color.BLACK));
             }//End if
          }//End for
       }//End while
-      
       animatePanel.repaint();
    }//End drawConnectors() method
    
@@ -180,21 +171,15 @@ Make the application:  create the MenuBar, "help" dialogs,
       statusReport("Create HashMap " + map.size() + " City " + fr.getNumCities() + " Gold " +
          fr.getNumGold() + " Map " + fr.getNumMaps());
       
-   	// set any initial visual Markers or Connectors
+   	// sets any initial visual Markers or Connectors
    	// get any required user mouse clicks for positional information.
-   	// initialize any algorithm halting conditions (ie, number of steps/moves).
-      long startTime = System.nanoTime();
       drawMap();
-      long endTime = System.nanoTime();
-   
-      long duration = endTime - startTime;
-      System.out.println(duration);
       
       //Create Bot collection
       if (bot == null) {
          bot = new ArrayList<PlayerBot>(); 
-      } 
-      else {
+      //Resets bot for a new clean run
+      } else {
          bot.clear();
       }//End if
       //Create 1 Bot 
@@ -202,7 +187,7 @@ Make the application:  create the MenuBar, "help" dialogs,
       waitForMousePosition();
       int x = (int)mousePosition.getX();
       int y = (int)mousePosition.getY();
-      
+      //Find nearest WayPoint to mouse click
       WayPoint a = nearestWayPoint(x, y);
       start = new Point(a.getWX(), a.getWY());
       makeBot("Red", start, a.getHeight());
@@ -223,15 +208,18 @@ Make the application:  create the MenuBar, "help" dialogs,
 
    public synchronized void simulateAlgorithm() {
       setStatus("simulateAlgorithm()");
+      
+      // get aBot from the list of created bots
       PlayerBot aBot = bot.get(0);
+      // set the bot's dest to the end point
       aBot.setDest(end);
+      // give the player a map of the field for traversal
       aBot.gainMap(map);
+      // create a CheckWayPoint object for checking each location the bot traverses
       CheckWayPoint check = new CheckWayPoint(aBot, this);;
       
       Point aPoint = aBot.getPoint();
-      Point temp = null;
-      Point prevPoint = null;
-      Point dest = end;
+      Point dest;
       
       boolean mapMove = false;
       
@@ -239,42 +227,39 @@ Make the application:  create the MenuBar, "help" dialogs,
    
       Stack<WayPoint> list = new Stack<WayPoint>();
       
-      String status = "Start (" + (int)start.getX() + ", " + (int)start.getY() + "), Stop (" +
+      statusReport("Start (" + (int)start.getX() + ", " + (int)start.getY() + "), Stop (" +
          (int)end.getX() + ", " + (int)end.getY() + "), Player " + aBot.getStrength() + " $ " +
-         aBot.getWealth();
-      
-      statusReport(status);
+         aBot.getWealth());
       
       while (runnable()) {
-         if ((list == null || list.isEmpty()) || (aBot.getTMap() && !mapMove)) {
+         if (list.isEmpty() || (aBot.getTMap() && !mapMove)) {
+            // clear open and closed set nodes from the frame
             animatePanel.clearTemporaryDrawables();
+            // obtain the bot's destination
             dest = aBot.getDest();
-            
             //Pathing algorithm
             list = aBot.aStarMove(dest, app);
-         
-            status = "Path (" + (int)aBot.getPoint().getX() + ", " + (int)aBot.getPoint().getY() + 
-               ") to (" + (int)dest.getX() + ", " + (int)dest.getY() + "), length " + list.size();
-            statusReport(status);
-            
-            if (!mapMove) mapMove = true;
-            if (!aBot.getTMap() && mapMove) mapMove = false;
-            //if (!mapMove || (!aBot.hasTMap && mapMove)) mapMove = !mapMove; //test this if the other two work
+          
             //if the player has a map and has just made the path to it, make mapMove true
             //so that a new path isn't created. Once the player has reached the gold WP from
             //the TMap, hasTMap is set to false and a new path must be made back to the original
             //destination. When the player doesn't have a TMap and the move has been made, mapMove
             //is set back to false as a reset.
+            if (!mapMove) mapMove = true;
+            if (!aBot.getTMap() && mapMove) mapMove = false;
             
+            // if the list is null, no path is available to the chosen destination
             if (list == null) {
                setSimRunning(false);
                setModelValid(false);
                animatePanel.setComponentState(false, false, false, false, true);
-               status = "No path (" + (int)start.getX() + ", " + (int)aPoint.getY() + ") " + 
-                  "to (" + (int)dest.getX() + ", " + (int)dest.getY() + ")";
-               statusReport(status);
+               statusReport("No path (" + (int)start.getX() + ", " + (int)aPoint.getY() + ") " + 
+                  "to (" + (int)dest.getX() + ", " + (int)dest.getY() + ")");
                return;
             }//End if
+            
+            statusReport("Path (" + (int)aBot.getPoint().getX() + ", " + (int)aBot.getPoint().getY() + 
+               ") to (" + (int)dest.getX() + ", " + (int)dest.getY() + "), length " + list.size());
          } 
          else {
          
@@ -282,17 +267,17 @@ Make the application:  create the MenuBar, "help" dialogs,
             aWayPoint = map.get(aPoint);
             
             check.checkWP(aWayPoint);
-         
+            // check if end is reached and no treasure map is being held
             if (aBot.getPoint().equals(end) && !aBot.getTMap()) {
                setSimRunning(false);
                setModelValid(false);
                animatePanel.setComponentState(false, false, false, false, true);
-               status = "Success, goal (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + ") " + 
-                  ", Player " + aBot.getStrength() + " $ " + aBot.getWealth();
-               statusReport(status);
+               statusReport("Success, goal (" + (int)aPoint.getX() + ", " + (int)aPoint.getY() + ") " + 
+                  ", Player " + aBot.getStrength() + " $ " + aBot.getWealth());
                return;
             }//End if
             
+            // make a move if the player hasn't just picked up a treasure map
             if (!aBot.getTMap() || mapMove) {
                aBot.setMove(list.pop());
                aBot.move();

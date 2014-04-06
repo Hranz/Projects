@@ -1,8 +1,10 @@
 /*
    Programmers: Kristoffer Larson, Josue Ruiz
-   Date:
+   Date: March 28, 2014
    
-   Description
+   Description: A Node object for the A* pathing algorithm in
+      the PlayerBot class. It's used for the open and closed
+      sets when traversing the graph.
 
 */
 
@@ -56,10 +58,10 @@ public class Node implements Comparable<Node> {
 		if (obj == this)
 			return true;
 		return this.p.equals(((Node) obj).p);
-	}
+	}//End equals() method
    
    public int hashCode() {
       return this.p.hashCode();
-   }
+   }//End hashCode() method
    
 }//End class
