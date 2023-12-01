@@ -1,4 +1,4 @@
 Projects
 =============
 
-Current projects that I am working on, or projects that I have finished.
+Projects that I have finished for university.
